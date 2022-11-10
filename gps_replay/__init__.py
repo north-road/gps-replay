@@ -9,10 +9,12 @@
 # (at your option) any later version.
 # ---------------------------------------------------------------------
 
+from pathlib import Path
 from qgis.PyQt.QtCore import (
     QCoreApplication
 )
 
+from .gps_replayer import GpsLogReplayer
 from .gui import GuiUtils
 
 
@@ -50,3 +52,11 @@ class GpsReplayPlugin:
 
     def unload(self):
         pass
+
+    def create_replayer(self, file_path: Path):
+        replayer = GpsLogReplayer(file_path, self.iface.mapCanvas().temporalController())
+        replayer.error_occurred.connect(self.log_error)
+        self.iface.setGpsPanelConnection(replayer)
+
+    def log_error(self, error: str):
+        self.iface.messageBar().pushWarning('GPS Replayer', error)
