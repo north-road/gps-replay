@@ -9,4 +9,5 @@ author=Nyall Dawson
 email=nyall.dawson@gmail.com
 repository=https://github.com/north-road/gps-replay
 tracker=https://github.com/north-road/gps-replay
+homepage=https://github.com/north-road/gps-replay
 changelog=Version 0.0.1 (2022-11-10) - First version
