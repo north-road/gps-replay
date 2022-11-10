@@ -14,7 +14,6 @@ from qgis.core import (
     QgsDateTimeRange,
     QgsTemporalNavigationObject
 )
-from qgis.utils import iface
 
 
 class GpsLogReplayer(QgsNmeaConnection):
@@ -158,4 +157,3 @@ class GpsLogReplayer(QgsNmeaConnection):
         pos = self.buffer.pos()
         self.buffer.write(nmea_msg)
         self.buffer.seek(pos)
-
