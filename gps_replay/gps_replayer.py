@@ -1,3 +1,18 @@
+# -----------------------------------------------------------
+# Copyright (C) 2022 Nyall Dawson
+# -----------------------------------------------------------
+# Licensed under the terms of GNU GPL 2
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# ---------------------------------------------------------------------
+
+"""
+GPS Replayer
+"""
+
 from pathlib import Path
 from typing import Optional, List
 
@@ -17,6 +32,10 @@ from qgis.core import (
 
 
 class GpsLogReplayer(QgsNmeaConnection):
+    """
+    GPS replayer, a QGIS GPS connection which replays a previously recorded log
+    """
+
     error_occurred = pyqtSignal(str)
 
     def __init__(self, file: Path, temporal_controller: QgsTemporalNavigationObject):
@@ -25,7 +44,7 @@ class GpsLogReplayer(QgsNmeaConnection):
         super().__init__(self.buffer)
 
         self.temporal_controller = temporal_controller
-        with open(file, 'rt') as f:
+        with open(file, 'rt', encoding='utf-8') as f:
             log = f.readlines()
 
         # preparse log to scan for time stamps
@@ -85,6 +104,9 @@ class GpsLogReplayer(QgsNmeaConnection):
 
     @staticmethod
     def date_from_sentence(sentence: str) -> Optional[QDate]:
+        """
+        Tries to extract a date value from a NMEA sentence
+        """
         if sentence.startswith('$GNRMC'):
             parts = sentence.split(',')
 
@@ -99,6 +121,9 @@ class GpsLogReplayer(QgsNmeaConnection):
 
     @staticmethod
     def timestamp_from_sentence(sentence: str, date: QDate) -> Optional[QDateTime]:
+        """
+        Tries to extract a timestamp value from a NMEA sentence
+        """
         if sentence.startswith('$GNRMC') or \
                 sentence.startswith('$GNGNS') or \
                 sentence.startswith('$GNGGA'):
@@ -127,31 +152,37 @@ class GpsLogReplayer(QgsNmeaConnection):
 
         return None
 
-    def temporal_extents_changed(self, range):
-        # find closest sentences
+    def temporal_extents_changed(self, temporal_range):
+        """
+        Called when the temporal controller visible range is changed
+        """
 
+        # find closest sentences
         prev_sentence = None
         next_sentence = None
         for sentence in self.sentences:
-            if range.contains(sentence[0]):
+            if temporal_range.contains(sentence[0]):
                 self.send_sentence(sentence[1])
                 return
 
-            if sentence[0] < range.begin():
+            if sentence[0] < temporal_range.begin():
                 prev_sentence = sentence
-            if sentence[0] > range.begin() and not next_sentence:
+            if sentence[0] > temporal_range.begin() and not next_sentence:
                 next_sentence = sentence
                 break
 
         if not prev_sentence or not next_sentence:
             return
 
-        if prev_sentence[0].secsTo(range.begin()) < range.begin().secsTo(next_sentence[0]):
+        if prev_sentence[0].secsTo(temporal_range.begin()) < temporal_range.begin().secsTo(next_sentence[0]):
             self.send_sentence(prev_sentence[1])
         else:
             self.send_sentence(next_sentence[1])
 
     def send_sentence(self, sentence: List[str]):
+        """
+        Sends a sentence as a GPS messages
+        """
         nmea_msg = ('\r\n'.join(sentence)).encode()
 
         pos = self.buffer.pos()

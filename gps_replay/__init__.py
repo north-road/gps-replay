@@ -9,7 +9,12 @@
 # (at your option) any later version.
 # ---------------------------------------------------------------------
 
+"""
+GPS Replay Plugin
+"""
+
 from pathlib import Path
+
 from qgis.PyQt.QtCore import (
     QCoreApplication
 )
@@ -19,10 +24,17 @@ from .gui import GuiUtils
 
 
 def classFactory(iface):
+    """
+    Creates the plugin instance
+    """
     return GpsReplayPlugin(iface)
 
 
 class GpsReplayPlugin:
+    """
+    GPS Replay Plugin
+    """
+
     def __init__(self, iface):
         self.iface = iface
 
@@ -41,11 +53,12 @@ class GpsReplayPlugin:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GpsReplay', message)
 
+    # pylint: disable=missing-function-docstring
+
     def initProcessing(self):
         """Create the Processing provider"""
 
         # maybe in future?
-        pass
 
     def initGui(self):
         self.initProcessing()
@@ -53,10 +66,18 @@ class GpsReplayPlugin:
     def unload(self):
         pass
 
+    # pylint: enable=missing-function-docstring
+
     def create_replayer(self, file_path: Path):
+        """
+        Creates a GPS log replayer and attaches it to the QGIS instance
+        """
         replayer = GpsLogReplayer(file_path, self.iface.mapCanvas().temporalController())
-        replayer.error_occurred.connect(self.log_error)
+        replayer.error_occurred.connect(self._log_error)
         self.iface.setGpsPanelConnection(replayer)
 
-    def log_error(self, error: str):
+    def _log_error(self, error: str):
+        """
+        Shows an error to the user via message bar
+        """
         self.iface.messageBar().pushWarning('GPS Replayer', error)
