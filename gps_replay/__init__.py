@@ -97,7 +97,9 @@ class GpsReplayPlugin:
         """
         replayer = GpsLogReplayer(file_path, self.iface.mapCanvas().temporalController())
         replayer.error_occurred.connect(self._log_error)
-        self.iface.setGpsPanelConnection(replayer)
+        replayer.load()
+        if replayer.is_valid():
+            self.iface.setGpsPanelConnection(replayer)
 
     def _log_error(self, error: str):
         """

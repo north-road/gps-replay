@@ -45,13 +45,26 @@ class GpsLogReplayer(QgsNmeaConnection):
 
         self.temporal_controller = temporal_controller
         with open(file, 'rt', encoding='utf-8') as f:
-            log = f.readlines()
+            self.log = f.readlines()
 
+        self.sentences = []
+        self._valid = False
+
+    def is_valid(self) -> bool:
+        """
+        Returns True if the recorder is in a valid state
+        """
+        return self._valid
+
+    def load(self):
+        """
+        Loads the log file
+        """
         # preparse log to scan for time stamps
 
         # first scan for first date value
         first_date = None
-        for sentence in log:
+        for sentence in self.log:
             first_date = GpsLogReplayer.date_from_sentence(sentence)
             if first_date is not None:
                 break
@@ -62,7 +75,7 @@ class GpsLogReplayer(QgsNmeaConnection):
 
         # then scan for first timestamp
         first_timestamp_utc = None
-        for sentence in log:
+        for sentence in self.log:
             first_timestamp_utc = GpsLogReplayer.timestamp_from_sentence(sentence, first_date)
             if first_timestamp_utc is not None:
                 break
@@ -71,12 +84,10 @@ class GpsLogReplayer(QgsNmeaConnection):
             self.error_occurred.emit(self.tr('No timestamp found in log'))
             return
 
-        self.sentences = []
-
         current_date = first_date
         current_utc = first_timestamp_utc
         current_parts = []
-        for sentence in log:
+        for sentence in self.log:
             sentence = sentence.strip()
             if not sentence:
                 continue
@@ -101,6 +112,7 @@ class GpsLogReplayer(QgsNmeaConnection):
 
         self.temporal_controller.setTemporalExtents(time_range)
         self.temporal_controller.updateTemporalRange.connect(self.temporal_extents_changed)
+        self._valid = True
 
     @staticmethod
     def date_from_sentence(sentence: str) -> Optional[QDate]:
@@ -174,7 +186,8 @@ class GpsLogReplayer(QgsNmeaConnection):
         if not prev_sentence or not next_sentence:
             return
 
-        if prev_sentence[0].secsTo(temporal_range.begin()) < temporal_range.begin().secsTo(next_sentence[0]):
+        if prev_sentence[0].secsTo(temporal_range.begin()) < temporal_range.begin().secsTo(
+                next_sentence[0]):
             self.send_sentence(prev_sentence[1])
         else:
             self.send_sentence(next_sentence[1])
