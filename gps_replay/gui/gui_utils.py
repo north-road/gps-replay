@@ -65,7 +65,7 @@ class GuiUtils:
         """
         path = os.path.join(
             os.path.dirname(__file__),
-            '../../google_maps_geocoder',
+            '../',
             'images',
             icon)
         if not os.path.exists(path):
@@ -82,7 +82,7 @@ class GuiUtils:
         """
         path = os.path.join(
             os.path.dirname(__file__),
-            '../../google_maps_geocoder',
+            '../',
             'ui',
             file)
         if not os.path.exists(path):

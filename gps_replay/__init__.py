@@ -14,9 +14,14 @@ GPS Replay Plugin
 """
 
 from pathlib import Path
+from typing import Optional
 
 from qgis.PyQt.QtCore import (
     QCoreApplication
+)
+from qgis.PyQt.QtWidgets import (
+    QAction,
+    QFileDialog
 )
 
 from .gps_replayer import GpsLogReplayer
@@ -37,6 +42,7 @@ class GpsReplayPlugin:
 
     def __init__(self, iface):
         self.iface = iface
+        self.replay_action: Optional[QAction] = None
 
     @staticmethod
     def tr(message):
@@ -63,10 +69,27 @@ class GpsReplayPlugin:
     def initGui(self):
         self.initProcessing()
 
+        self.replay_action = QAction(self.tr('Replay GPS Log'), self.iface.mainWindow())
+        self.replay_action.setIcon(GuiUtils.get_icon('icon.svg'))
+        self.replay_action.triggered.connect(self.select_file)
+        self.iface.pluginToolBar().addAction(self.replay_action)
+
     def unload(self):
-        pass
+        if self.replay_action is not None:
+            self.replay_action.deleteLater()
+            self.replay_action = None
 
     # pylint: enable=missing-function-docstring
+
+    def select_file(self):
+        """
+        Asks user for a log file to replay
+        """
+        file, _ = QFileDialog.getOpenFileName(self.iface.mainWindow(),
+                                              self.tr('GPS Replay'),
+                                              self.tr('Select log to replay'))
+        if file:
+            self.create_replayer(Path(file))
 
     def create_replayer(self, file_path: Path):
         """
