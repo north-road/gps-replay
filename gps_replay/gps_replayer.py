@@ -13,9 +13,11 @@
 GPS Replayer
 """
 
+from enum import Enum
 from pathlib import Path
 from typing import Optional, List
 
+import regex
 from qgis.PyQt.QtCore import (
     QBuffer,
     Qt,
@@ -29,6 +31,32 @@ from qgis.core import (
     QgsDateTimeRange,
     QgsTemporalNavigationObject
 )
+
+RMC_SENTENCE_RX = regex.compile(r'^\$G.RMC.*$')
+GNS_SENTENCE_RX = regex.compile(r'^\$G.GNS.*$')
+GGA_SENTENCE_RX = regex.compile(r'^\$G.GGA.*$')
+
+
+class NmeaSentenceType(Enum):
+    """
+    NMEA Sentence types (a small subset!)
+    """
+    RMC = 1
+    GNS = 2
+    GGA = 3
+
+    @staticmethod
+    def from_sentence(sentence: str) -> Optional['NmeaSentenceType']:
+        """
+        Deduces the NMEA sentence type from a sentence
+        """
+        if RMC_SENTENCE_RX.match(sentence):
+            return NmeaSentenceType.RMC
+        if GNS_SENTENCE_RX.match(sentence):
+            return NmeaSentenceType.GNS
+        if GGA_SENTENCE_RX.match(sentence):
+            return NmeaSentenceType.GGA
+        return None
 
 
 class GpsLogReplayer(QgsNmeaConnection):
@@ -119,13 +147,17 @@ class GpsLogReplayer(QgsNmeaConnection):
         """
         Tries to extract a date value from a NMEA sentence
         """
-        if sentence.startswith('$GNRMC'):
+        if NmeaSentenceType.from_sentence(sentence) == NmeaSentenceType.RMC:
             parts = sentence.split(',')
 
             date = parts[9]
             dd = int(date[:2])
             mm = int(date[2:4])
             yy = int(date[4:6])
+            if yy < 80:
+                yy += 2000
+            else:
+                yy += 1900
 
             return QDate(yy, mm, dd)
 
@@ -136,31 +168,37 @@ class GpsLogReplayer(QgsNmeaConnection):
         """
         Tries to extract a timestamp value from a NMEA sentence
         """
-        if sentence.startswith('$GNRMC') or \
-                sentence.startswith('$GNGNS') or \
-                sentence.startswith('$GNGGA'):
+        sentence_type = NmeaSentenceType.from_sentence(sentence)
+        if sentence_type in (
+                NmeaSentenceType.RMC,
+                NmeaSentenceType.GNS,
+                NmeaSentenceType.GGA):
 
             parts = sentence.split(',')
             timestamp_utc = parts[1]
+            if timestamp_utc:
+                hh = int(timestamp_utc[:2])
+                mm = int(timestamp_utc[2:4])
+                ss = int(timestamp_utc[4:6])
+                assert timestamp_utc[6] == '.'
+                ms = int(timestamp_utc[7:9]) * 10
 
-            hh = int(timestamp_utc[:2])
-            mm = int(timestamp_utc[2:4])
-            ss = int(timestamp_utc[4:6])
-            assert timestamp_utc[6] == '.'
-            ms = int(timestamp_utc[7:9]) * 10
+                time = QTime(hh, mm, ss, ms)
 
-            time = QTime(hh, mm, ss, ms)
+                if sentence_type == NmeaSentenceType.RMC:
+                    # update date
+                    date = parts[9]
+                    dd = int(date[:2])
+                    mm = int(date[2:4])
+                    yy = int(date[4:6])
+                    if yy < 80:
+                        yy += 2000
+                    else:
+                        yy += 1900
+                    date = QDate(yy, mm, dd)
 
-            if sentence.startswith('$GNRMC'):
-                # update date
-                date = parts[9]
-                dd = int(date[:2])
-                mm = int(date[2:4])
-                yy = int(date[4:6]) + 2000
-                date = QDate(yy, mm, dd)
-
-            timestamp = QDateTime(date, time, Qt.TimeSpec.UTC)
-            return timestamp
+                timestamp = QDateTime(date, time, Qt.TimeSpec.UTC)
+                return timestamp
 
         return None
 
