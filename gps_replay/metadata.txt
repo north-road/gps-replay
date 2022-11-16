@@ -2,7 +2,7 @@
 name=GPS Replay
 description=Allows replay of a previously logged GPS file (i.e. a NMEA text log).
 about=Allows replay of a previously logged GPS file (i.e. a NMEA text log). The playback is tied to the QGIS temporal controller, allowing users to play and scrub forward and backward in time through the logged GPS information.
-version=0.0.2
+version=0.0.3
 qgisMinimumVersion=3.22
 icon=icon.png
 author=Nyall Dawson
@@ -10,5 +10,6 @@ email=nyall.dawson@gmail.com
 repository=https://github.com/north-road/gps-replay
 tracker=https://github.com/north-road/gps-replay
 homepage=https://github.com/north-road/gps-replay
-changelog=Version 0.0.2 (2022-11-16) - Detect timestamps from more sentence types
+changelog=Version 0.0.3 (2022-11-16) - Correctly handle last sentence in batches
+    Version 0.0.2 (2022-11-16) - Detect timestamps from more sentence types
     Version 0.0.1 (2022-11-10) - First version

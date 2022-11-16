@@ -234,7 +234,7 @@ class GpsLogReplayer(QgsNmeaConnection):
         """
         Sends a sentence as a GPS messages
         """
-        nmea_msg = ('\r\n'.join(sentence)).encode()
+        nmea_msg = ('\r\n'.join(sentence) + '\r\n').encode()
 
         pos = self.buffer.pos()
         self.buffer.write(nmea_msg)
