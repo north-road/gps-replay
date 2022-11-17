@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, List
 
-import regex
+import re
 from qgis.PyQt.QtCore import (
     QBuffer,
     Qt,
@@ -32,9 +32,9 @@ from qgis.core import (
     QgsTemporalNavigationObject
 )
 
-RMC_SENTENCE_RX = regex.compile(r'^\$G.RMC.*$')
-GNS_SENTENCE_RX = regex.compile(r'^\$G.GNS.*$')
-GGA_SENTENCE_RX = regex.compile(r'^\$G.GGA.*$')
+RMC_SENTENCE_RX = re.compile(r'^\$G.RMC.*$')
+GNS_SENTENCE_RX = re.compile(r'^\$G.GNS.*$')
+GGA_SENTENCE_RX = re.compile(r'^\$G.GGA.*$')
 
 
 class NmeaSentenceType(Enum):
