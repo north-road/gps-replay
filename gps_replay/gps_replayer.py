@@ -35,6 +35,7 @@ from qgis.core import (
 RMC_SENTENCE_RX = re.compile(r'^\$G.RMC.*$')
 GNS_SENTENCE_RX = re.compile(r'^\$G.GNS.*$')
 GGA_SENTENCE_RX = re.compile(r'^\$G.GGA.*$')
+ZDA_SENTENCE_RX = re.compile(r'^\$G.ZDA.*$')
 
 
 class NmeaSentenceType(Enum):
@@ -44,6 +45,7 @@ class NmeaSentenceType(Enum):
     RMC = 1
     GNS = 2
     GGA = 3
+    ZDA = 4
 
     @staticmethod
     def from_sentence(sentence: str) -> Optional['NmeaSentenceType']:
@@ -56,6 +58,8 @@ class NmeaSentenceType(Enum):
             return NmeaSentenceType.GNS
         if GGA_SENTENCE_RX.match(sentence):
             return NmeaSentenceType.GGA
+        if ZDA_SENTENCE_RX.match(sentence):
+            return NmeaSentenceType.ZDA
         return None
 
 
@@ -161,6 +165,13 @@ class GpsLogReplayer(QgsNmeaConnection):
 
             return QDate(yy, mm, dd)
 
+        if NmeaSentenceType.from_sentence(sentence) == NmeaSentenceType.ZDA:
+            parts = sentence.split(',')
+            dd = int(parts[2])
+            mm = int(parts[3])
+            yy = int(parts[4])
+            return QDate(yy, mm, dd)
+
         return None
 
     @staticmethod
@@ -172,7 +183,8 @@ class GpsLogReplayer(QgsNmeaConnection):
         if sentence_type in (
                 NmeaSentenceType.RMC,
                 NmeaSentenceType.GNS,
-                NmeaSentenceType.GGA):
+                NmeaSentenceType.GGA,
+                NmeaSentenceType.ZDA):
 
             parts = sentence.split(',')
             timestamp_utc = parts[1]
@@ -180,8 +192,9 @@ class GpsLogReplayer(QgsNmeaConnection):
                 hh = int(timestamp_utc[:2])
                 mm = int(timestamp_utc[2:4])
                 ss = int(timestamp_utc[4:6])
-                assert timestamp_utc[6] == '.'
-                ms = int(timestamp_utc[7:9]) * 10
+                ms = 0
+                if len(timestamp_utc) > 6:    # there is decimal part
+                    ms = int(float(timestamp_utc[6:]) * 1000)
 
                 time = QTime(hh, mm, ss, ms)
 
