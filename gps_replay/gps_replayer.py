@@ -210,6 +210,12 @@ class GpsLogReplayer(QgsNmeaConnection):
                         yy += 1900
                     date = QDate(yy, mm, dd)
 
+                if sentence_type == NmeaSentenceType.ZDA:
+                    dd = int(parts[2])
+                    mm = int(parts[3])
+                    yy = int(parts[4])
+                    date = QDate(yy, mm, dd)
+
                 timestamp = QDateTime(date, time, Qt.TimeSpec.UTC)
                 return timestamp
 
