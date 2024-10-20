@@ -32,10 +32,10 @@ from qgis.core import (
     QgsTemporalNavigationObject
 )
 
-RMC_SENTENCE_RX = re.compile(r'^\$G.RMC.*$')
-GNS_SENTENCE_RX = re.compile(r'^\$G.GNS.*$')
-GGA_SENTENCE_RX = re.compile(r'^\$G.GGA.*$')
-ZDA_SENTENCE_RX = re.compile(r'^\$G.ZDA.*$')
+RMC_SENTENCE_RX = re.compile(r'^\$[A-Z]{2}RMC.*$')
+GNS_SENTENCE_RX = re.compile(r'^\$[A-Z]{2}GNS.*$')
+GGA_SENTENCE_RX = re.compile(r'^\$[A-Z]{2}GGA.*$')
+ZDA_SENTENCE_RX = re.compile(r'^\$[A-Z]{2}ZDA.*$')
 
 
 class NmeaSentenceType(Enum):
